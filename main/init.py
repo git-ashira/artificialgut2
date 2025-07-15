@@ -3,36 +3,42 @@ import adafruit_ads1x15.ads1115 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
 import justpy as jp
 from gpiozero import LED
-
-# initialize the I2C interface
-i2c = busio.I2C(board.SCL, board.SDA)
-
-# create the ADC object, add more ads channels after we recieve them, just change the address
-
-ads1 = ADS.ADS1115(i2c, address=0x48) #for probes 1-4
-ads2 = ADS.ADS1115(i2c, address=0x49) # check the probes (not recieved)
-
-# create the analog input channel 
-channel1 = AnalogIn(ads1, ADS.P0) #channel for probe 1
-
-# get voltages
-volt1 = channel1.voltage
+import param
 
 # convert voltage to pH
-def voltage_to_ph(voltage):
-    return 7 - 5.98 * (voltage - 2.5)   
+def voltage_to_ph(voltage, ph_m, ph_off):
+    value = (7.0 - (2.5 - voltage) * ph_m) + ph_off
+    return value
 
-# get pH value
-ph1 = voltage_to_ph(volt1)
+# get ph reading from the probe
+def getPh(Probe):
 
+    # Get the pin, channel, m and offset for the specified probe
+    pin = param.get_ph_pins(Probe)
+    channel = AnalogIn(pin)
+    volt = channel.voltage
+    ph_m = param.get_ph_m(Probe)
+    ph_off = param.get_ph_off(Probe)
 
+    buf = [0] * 10
+    
+    # Take 10 readings from the pH sensor
+    for i in range(10):
+        buf[i] = volt  # Assuming analog_read is defined elsewhere
+        time.sleep(0.01)  # 10ms delay
+    
+     # Sort readings from small to large (bubble sort)
+    for i in range(9):
+        for j in range(i + 1, 10):
+            if buf[i] > buf[j]:
+                buf[i], buf[j] = buf[j], buf[i]
 
-# define GPIO pins for pumps
-pump_pins = {
-    "pump1": 17,
-    "pump2": 27,
-    "pump3": 22,
-    "pump4": 23
-}
-# create LED objects for pumps
-pumps = {name: LED(pin) for name, pin in pump_pins.items()} 
+    # Calculate average of middle 6 readings
+    avg_value = sum(buf[2:8]) / 6.0
+
+    # convert into pH
+
+    ph = voltage_to_ph(avg_value, ph_m, ph_off)
+
+    return ph
+
