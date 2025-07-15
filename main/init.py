@@ -2,7 +2,7 @@ import board, time, busio, asyncio, threading
 import adafruit_ads1x15.ads1115 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
 import justpy as jp
-from gpiozero import LED
+import gpiozero
 import param
 
 # convert voltage to pH
@@ -14,11 +14,15 @@ def voltage_to_ph(voltage, ph_m, ph_off):
 def getPh(Probe):
 
     # Get the pin, channel, m and offset for the specified probe
-    pin = param.get_ph_pins(Probe)
-    channel = AnalogIn(pin)
+    
+    pin = param.get_ph_pins()
+    p = pin[Probe]
+    channel = AnalogIn(p)
     volt = channel.voltage
-    ph_m = param.get_ph_m(Probe)
-    ph_off = param.get_ph_off(Probe)
+    m = param.get_ph_m()
+    ph_m = m[Probe]
+    off = param.get_ph_off()
+    ph_off = off[Probe]
 
     buf = [0] * 10
     
@@ -42,3 +46,6 @@ def getPh(Probe):
 
     return ph
 
+pin = param.get_ph_off()
+p = pin['A0']
+print(p)

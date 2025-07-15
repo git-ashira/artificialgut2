@@ -39,7 +39,7 @@ i2c = busio.I2C(board.SCL, board.SDA)
 # create the ADC object, add more ads channels after we recieve them, just change the address
 
 ads1 = ADS.ADS1115(i2c, address=0x48) #for probes 1-4
-ads2 = ADS.ADS1115(i2c, address=0x49) # check the probes (not recieved)
+# ads2 = ADS.ADS1115(i2c, address=0x49) # check the probes (not recieved)
 
 def get_ph_pins():
     return {
@@ -50,3 +50,49 @@ def get_ph_pins():
     }
 
 
+
+# convert voltage to pH
+def voltage_to_ph(voltage, ph_m, ph_off):
+    value = (7.0 - (2.5 - voltage) * ph_m) + ph_off
+    return value
+
+# get ph reading from the probe
+def getPh(Probe):
+
+    # Get the pin, channel, m and offset for the specified probe
+    
+    pin = get_ph_pins()
+    # p = pin[Probe]
+    channel = AnalogIn(ads1, ADS.P0)
+    volt = channel.voltage
+    m = get_ph_m()
+    ph_m = m[Probe]
+    off = get_ph_off()
+    ph_off = off[Probe]
+
+    buf = [0] * 10
+    
+    # Take 10 readings from the pH sensor
+    for i in range(10):
+        buf[i] = volt  # Assuming analog_read is defined elsewhere
+        time.sleep(0.01)  # 10ms delay
+    
+     # Sort readings from small to large (bubble sort)
+    for i in range(9):
+        for j in range(i + 1, 10):
+            if buf[i] > buf[j]:
+                buf[i], buf[j] = buf[j], buf[i]
+
+    # Calculate average of middle 6 readings
+    avg_value = sum(buf[2:8]) / 6.0
+
+    # convert into pH
+
+    ph = voltage_to_ph(avg_value, ph_m, ph_off)
+
+    return ph
+
+
+
+h = getPh("A0")
+print("pH:", h)
