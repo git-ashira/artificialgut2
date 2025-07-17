@@ -6,10 +6,11 @@ import gpiozero
 import param
 import init
 
-# print pH on the terminal
-while True:
-    h = param.get_ph_pins()
-    ph = h["A0"]
-    print("pH:", ph)
-    asyncio.sleep(1000)
 
+def new_function(a):
+    # This function is a placeholder for any new functionality you want to add
+    
+    pnass = param.get_pump_pins()
+    Print = pnass[*a]
+
+new_function("C0A")
